@@ -1,16 +1,52 @@
-# article_app
+# Flutter Article App 📖
 
-A new Flutter project.
+A Flutter application that allows users to manage articles with CRUD operations. Built using **Flutter** and **GetX** for state management, this app provides a creative UI and implements pagination for seamless browsing.
 
-## Getting Started
+## 🚀 Features
+- **List Articles**: Fetch and display articles with pagination.
+- **Filter Articles**: Filter by title, category, author, and read time.
+- **View Article Details**: Display full details of a selected article.
+- **Create Article**: Add a new article with required fields.
+- **Update Article**: Modify an existing article (except read time).
+- **Error Handling**: Proper messages and UI states for loading, success, and failure.
 
-This project is a starting point for a Flutter application.
+## 🛠️ Tech Stack
+- **Flutter** (Latest stable version)
+- **GetX** (State Management)
+- **http** (API Handling)
+- **Pagination** (API-based)
 
-A few resources to get you started if this is your first Flutter project:
+## 📦 Setup & Installation
+1. **Clone the repository**:
+   ```sh
+   git clone https://github.com/dontaskit28/article-app.git
+   cd flutter-article-app
+   ```
+2. **Install dependencies**:
+   ```sh
+   flutter pub get
+   ```
+3. **Run the app**:
+   ```sh
+   flutter run
+   ```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 🌐 API Endpoints
+Base URL: `https://flutter.starbuzz.tech`
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+| Method | Endpoint                     | Description                     |
+|--------|------------------------------|---------------------------------|
+| GET    | `/articles`                  | Fetch articles with pagination |
+| GET    | `/articles/{articleId}`       | Fetch an article by ID         |
+| POST   | `/articles`                   | Create a new article           |
+| PATCH  | `/articles/{articleId}`       | Update an article              |
+
+## 📲 Release APK
+Download the release APK from [here](#) *(Replace with actual link after upload).*
+
+
+---
+
+📌 Developed by **TATARAO JAGU**
+
+   
