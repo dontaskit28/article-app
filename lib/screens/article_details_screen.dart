@@ -1,17 +1,14 @@
 import 'package:article_app/controllers/articles_controller.dart';
+import 'package:article_app/models/article_model.dart';
+import 'package:article_app/utils/custom_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ArticleDetailScreen extends GetView<ArticleController> {
-  final String articleId;
-
-  const ArticleDetailScreen({super.key, required this.articleId});
+  const ArticleDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Fetch article details when the screen loads
-    controller.fetchArticleById(articleId);
-
     return Scaffold(
       appBar: AppBar(title: Text("Article Details")),
       body: Obx(() {
@@ -21,8 +18,8 @@ class ArticleDetailScreen extends GetView<ArticleController> {
         if (controller.errorMessage.isNotEmpty) {
           return Center(child: Text(controller.errorMessage.value));
         }
-        var article = controller.selectedArticle;
-        if (article.isEmpty) {
+        Article? article = controller.selectedArticle.value;
+        if (article == null) {
           return Center(child: Text("No article found"));
         }
 
@@ -32,32 +29,47 @@ class ArticleDetailScreen extends GetView<ArticleController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                article["title"] ?? "No Title",
+                article.title ?? "No Title",
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
               Text(
-                "By ${article["author"] ?? "Unknown"}",
+                "By ${article.author ?? "Unknown"}",
                 style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
               ),
               SizedBox(height: 8),
               Text(
-                "Category: ${article["category"] ?? "N/A"}",
-                style: TextStyle(fontSize: 16),
+                "Category: ${article.category ?? "N/A"}",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
               SizedBox(height: 16),
               Text(
-                article["description"] ?? "No Description",
-                style: TextStyle(fontSize: 16),
+                article.description ?? "No Description",
+                style: TextStyle(fontSize: 16, color: Colors.black87),
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed:
-                    () => showUpdateDialog(
-                      context,
-                      article as Map<String, dynamic>,
+              SizedBox(height: 16),
+              Row(
+                  children: [
+                    Icon(Icons.access_time, size: 16,),
+                    SizedBox(width: 6),
+                    Text(
+                      "${article.readTime ?? 0} mins read",
+                      style: TextStyle(fontSize: 14),
                     ),
-                child: Text("Edit Article"),
+                  ],
+                ),
+              SizedBox(height: 20),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () => showUpdateDialog(context, article),
+                  icon: Icon(Icons.edit, size: 18, color: Colors.white,),
+                  label: Text("Edit Article", style: TextStyle(fontSize: 16,color: Colors.white),),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    textStyle: TextStyle(fontSize: 16,color: Colors.white),
+                    backgroundColor: const Color.fromARGB(255, 161, 127, 167),
+                  ),
+                ),
               ),
             ],
           ),
@@ -66,60 +78,89 @@ class ArticleDetailScreen extends GetView<ArticleController> {
     );
   }
 
-  /// Show a dialog to update the article
-  void showUpdateDialog(BuildContext context, Map<String, dynamic> article) {
-    TextEditingController titleController = TextEditingController(
-      text: article["title"],
-    );
-    TextEditingController descriptionController = TextEditingController(
-      text: article["description"],
-    );
+  
+  void showUpdateDialog(BuildContext context, Article article) {
+    TextEditingController titleController = TextEditingController(text: article.title);
+    TextEditingController descriptionController = TextEditingController(text: article.description);
+    TextEditingController authorController = TextEditingController(text: article.author);
+    TextEditingController categoryController = TextEditingController(text: article.category);
 
-    Get.defaultDialog(
-      title: "Update Article",
-      content: Column(
-        children: [
-          TextField(
-            controller: titleController,
-            decoration: InputDecoration(labelText: "Title"),
-          ),
-          TextField(
-            controller: descriptionController,
-            decoration: InputDecoration(labelText: "Description"),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(onPressed: () => Get.back(), child: Text("Cancel")),
-        ElevatedButton(
-          onPressed: () async {
-            Map<String, dynamic> updatedData = {
-              "title": titleController.text.trim(),
-              "description": descriptionController.text.trim(),
-            };
-
-            bool success = await controller.updateArticle(
-              articleId,
-              updatedData,
-            );
-            if (success) {
-              Get.back(); // Close the dialog
-              Get.snackbar(
-                "Success",
-                "Article updated successfully",
-                snackPosition: SnackPosition.BOTTOM,
-              );
-            } else {
-              Get.snackbar(
-                "Error",
-                "Failed to update article",
-                snackPosition: SnackPosition.BOTTOM,
-              );
-            }
-          },
-          child: Text("Update"),
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
-      ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Update Article", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              SizedBox(height: 12),
+              _buildTextField(controller: titleController, label: "Title"),
+              _buildTextField(controller: descriptionController, label: "Description"),
+              _buildTextField(controller: authorController, label: "Author"),
+              _buildTextField(controller: categoryController, label: "Category"),
+              SizedBox(height: 20),
+              Obx(() {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: Text("Cancel", style: TextStyle(fontSize: 16)),
+                  ),
+                  controller.isUpdating.value ? CircularProgressIndicator() : 
+                    ElevatedButton(
+                      onPressed: () async {
+                        Map<String, dynamic> updatedData = {
+                          "title": titleController.text.trim(),
+                          "description": descriptionController.text.trim(),
+                          "author": authorController.text.trim(),
+                          "category": categoryController.text.trim(),
+                        };
+
+                        bool success = await controller.updateArticle(article.id!, updatedData);
+                        if (success) {
+                          Get.back();
+                          SnackMessage.showSnackBar(title: "Success", message: "Article updated successfully");
+                        } else {
+                          SnackMessage.showSnackBar(title: "Error", message: "Failed to update article",isError: true,);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        textStyle: TextStyle(fontSize: 16),
+                      ),
+                      child: Text("Update"),
+                    ),
+                    ],
+                  ));
+                }),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  /// Custom styled TextField widget
+  Widget _buildTextField({required TextEditingController controller, required String label}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
     );
   }
 }

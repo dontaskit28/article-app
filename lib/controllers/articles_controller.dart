@@ -1,15 +1,17 @@
+import 'package:article_app/models/article_model.dart';
 import 'package:get/get.dart';
 import '../services/http_service.dart';
 
 class ArticleController extends GetxController {
-  var articles = [].obs; // List of articles
-  var isLoading = false.obs; // Loading state
-  var errorMessage = ''.obs; // Error message
-  var selectedArticle = {}.obs; // Stores selected article
+  var articles = <Article>[].obs;
+  var isLoading = false.obs;
+  var isUpdating = false.obs;
+  var errorMessage = ''.obs; 
+  Rx<Article?> selectedArticle = Rx<Article?>(null);
 
   int currentPage = 1;
   int lastPage = 1;
-  int pageSize = 10;
+  int pageSize = 15;
 
   @override
   void onInit() {
@@ -18,13 +20,13 @@ class ArticleController extends GetxController {
   }
 
   /// Fetch list of articles with pagination
-  void fetchArticles({bool isRefresh = false}) async {
+  void fetchArticles({bool isRefresh = false, Map<String, dynamic>? filters}) async {
     if (isRefresh) {
       currentPage = 1;
       articles.clear();
     }
 
-    if (currentPage > lastPage) return;
+    if (currentPage > lastPage || isLoading.value) return;
 
     try {
       isLoading(true);
@@ -33,13 +35,18 @@ class ArticleController extends GetxController {
       var response = await HttpService.getArticles(
         page: currentPage,
         size: pageSize,
+        filters: filters,
       );
 
       if (response["success"]) {
         lastPage = response["data"]["last_page"];
         var fetchedArticles = response["data"]["records"];
-        articles.addAll(fetchedArticles);
-        currentPage++;
+        
+          currentPage++;
+        
+          for (var article in fetchedArticles) {
+            articles.add(Article.fromJson(article));
+          }
       } else {
         errorMessage.value = "Failed to fetch articles";
       }
@@ -50,6 +57,8 @@ class ArticleController extends GetxController {
     }
   }
 
+
+
   /// Fetch a single article by ID
   void fetchArticleById(String articleId) async {
     try {
@@ -57,9 +66,8 @@ class ArticleController extends GetxController {
       errorMessage.value = '';
 
       var response = await HttpService.getArticleById(articleId);
-
       if (response["success"]) {
-        selectedArticle.value = response["data"];
+        selectedArticle.value = Article.fromJson( response["data"]);
       } else {
         errorMessage.value = "Failed to fetch article";
       }
@@ -73,13 +81,13 @@ class ArticleController extends GetxController {
   /// Create a new article
   Future<bool> createArticle(Map<String, dynamic> articleData) async {
     try {
-      isLoading(true);
+      isUpdating(true);
       errorMessage.value = '';
 
       var response = await HttpService.createArticle(articleData);
 
       if (response["success"]) {
-        articles.insert(0, response["data"]); // Add new article to the list
+        articles.insert(0, Article.fromJson(response["data"])); // Add new article to the list
         return true;
       } else {
         errorMessage.value = "Failed to create article";
@@ -89,7 +97,7 @@ class ArticleController extends GetxController {
       errorMessage.value = "Error: $e";
       return false;
     } finally {
-      isLoading(false);
+      isUpdating(false);
     }
   }
 
@@ -99,17 +107,19 @@ class ArticleController extends GetxController {
     Map<String, dynamic> updates,
   ) async {
     try {
-      isLoading(true);
+      isUpdating(true);
       errorMessage.value = '';
 
       var response = await HttpService.updateArticle(articleId, updates);
-
       if (response["success"]) {
         int index = articles.indexWhere(
-          (article) => article["id"] == articleId,
+          (article) => article.id == articleId,
         );
         if (index != -1) {
-          articles[index] = response["data"];
+          articles[index] = Article.fromJson(response["data"]);
+        }
+        if (selectedArticle.value != null) {
+          selectedArticle.value = Article.fromJson(response["data"]);
         }
         return true;
       } else {
@@ -120,7 +130,7 @@ class ArticleController extends GetxController {
       errorMessage.value = "Error: $e";
       return false;
     } finally {
-      isLoading(false);
+      isUpdating(false);
     }
   }
 }

@@ -12,10 +12,14 @@ class HttpService {
     int size = 10,
   }) async {
     try {
-      final Uri url = Uri.parse('$baseUrl/articles?page=$page&size=$size');
+       Uri url = Uri.parse('$baseUrl/articles?page=$page&size=$size');
 
+      // If filters exist, encode them properly
+      if (filters != null && filters.isNotEmpty) {
+        String filtersJson = jsonEncode(filters);
+        url = Uri.parse('$baseUrl/articles?page=$page&size=$size&filters=$filtersJson');
+      }
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
