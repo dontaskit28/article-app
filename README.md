@@ -4,7 +4,7 @@ A Flutter application that allows users to manage articles with CRUD operations.
 
 ## 🚀 Features
 - **List Articles**: Fetch and display articles with pagination.
-- **Filter Articles**: Filter by title, category, author, and read time.
+- **Filter Articles**: Filter by category.
 - **View Article Details**: Display full details of a selected article.
 - **Create Article**: Add a new article with required fields.
 - **Update Article**: Modify an existing article (except read time).
@@ -42,7 +42,7 @@ Base URL: `https://flutter.starbuzz.tech`
 | PATCH  | `/articles/{articleId}`       | Update an article              |
 
 ## 📲 Release APK
-Download the release APK from [here](#) *(Replace with actual link after upload).*
+Download the release APK from [here](https://drive.google.com/file/d/10LdfawWrzv0-7ZFdOQi7kuFwyBTiX5vs/view?usp=sharing) *(Replace with actual link after upload).*
 
 
 ---
